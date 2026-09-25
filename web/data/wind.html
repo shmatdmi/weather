@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Скорость ветра в Москве</title>
+</head>
+<body bgcolor="#E0FFFF" text="#0000FF">
+<pre>
+<a href="index.html">Перейти на главную</a><br>
+</pre>
+<img src="photo/logo.png" width="100%" align="center" alt="MSK Weather"><br>
+<hr>
+<font size="5"><span style="color: green">Новости сайта:</span></font><br>
+<font size="4"><span style="color: green">13.04.2024 Добавлен новый сервис — скорость ветра в Москве</span></font><br>
+<font size="4"><span style="color: green">25.09.2026 Подключено автоматическое обновление данных</span></font><br><br>
+<hr>
+<font size="5"><span style="color: blue">Разделы сайта:</span></font><br>
+<a href="wind.html">Скорость ветра в Москве</a><br>
+<a href="nvrsk.html">Погода в Анапе</a><br>
+<a href="sport.html">Раздел о спорте</a><br>
+<a href="archive.html">Архив</a><br><br>
+
+<font size="5"><span style="color: blue">Скорость ветра в Москве сейчас</span></font><br>
+<span id="wind-status">Получаем свежие данные…</span><br><br>
+Скорость ветра: <b><span id="current-wind">—</span> м/с</b><br>
+Направление: <b><span id="current-direction">—</span></b><br>
+Порывы: до <b><span id="current-gusts">—</span> м/с</b><br>
+Данные на: <b><span id="current-time">—</span></b><br><br>
+<button id="wind-refresh" type="button">Обновить данные</button>
+
+<script>
+  const directions = ["северный", "северо-восточный", "восточный", "юго-восточный", "южный", "юго-западный", "западный", "северо-западный"];
+  const format = value => new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 }).format(value);
+
+  async function loadWind() {
+    const button = document.querySelector("#wind-refresh");
+    const status = document.querySelector("#wind-status");
+    button.disabled = true;
+    status.textContent = "Получаем свежие данные…";
+    try {
+      const response = await fetch(`/api/weather?refresh=${Date.now()}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Ошибка загрузки");
+      document.querySelector("#current-wind").textContent = format(data.windSpeed);
+      document.querySelector("#current-direction").textContent = directions[Math.round(data.windDirection / 45) % directions.length];
+      document.querySelector("#current-gusts").textContent = format(data.windGusts);
+      document.querySelector("#current-time").textContent = new Intl.DateTimeFormat("ru-RU", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Moscow" }).format(new Date(data.time));
+      status.textContent = "Данные OpenWeather актуальны";
+    } catch (error) {
+      status.textContent = error.message || "Не удалось загрузить данные";
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  document.querySelector("#wind-refresh").addEventListener("click", loadWind);
+  loadWind();
+  setInterval(loadWind, 5 * 60 * 1000);
+</script>
+</body>
+</html>
